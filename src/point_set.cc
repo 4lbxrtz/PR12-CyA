@@ -43,6 +43,8 @@ void PointSet::ComputeQuickHullUpgrade() {
   hull_.erase(std::unique(hull_.begin(), hull_.end()), hull_.end());
 }
 
+
+
 void PointSet::XBounds(Point& min_x, Point& max_x) const {
   if (empty()) {
     std::cerr << "Error: PointSet is empty" << std::endl;
@@ -78,6 +80,36 @@ void PointSet::QuickHullUpgrade(const Line& line, int side) {
   Line line2 = {farthest, line.second};
   QuickHullUpgrade(line1, -FindSide(line1, line.second));
   QuickHullUpgrade(line2, -FindSide(line2, line.first));
+}
+
+void PointSet::ComputeBestConvexHull() {
+  std::vector<Point> best_hull;
+  size_t best_hull_size = 0;
+
+  for (const Point& start_point : *this) {
+    hull_.clear();
+    Point min_x_point = start_point;
+    Point max_x_point;
+
+    XBounds(min_x_point, max_x_point);
+
+    hull_.push_back(min_x_point);
+    hull_.push_back(max_x_point);
+
+    QuickHullUpgrade(Line(min_x_point, max_x_point), kLeft);
+    QuickHullUpgrade(Line(min_x_point, max_x_point), kRight);
+
+    // Remove duplicates
+    std::sort(hull_.begin(), hull_.end());
+    hull_.erase(std::unique(hull_.begin(), hull_.end()), hull_.end());
+
+    if (hull_.size() > best_hull_size) {
+      best_hull = hull_;
+      best_hull_size = hull_.size();
+    }
+  }
+
+  hull_ = best_hull;
 }
 
 bool PointSet::FarthestPoint(const Line& line, int side, Point& farthest) const {
@@ -129,10 +161,38 @@ void PointSet::Write(std::ostream& os) const {
 }
 
 void PointSet::WriteDOT(std::ostream& os) const {
-  for (const Point& point : hull_) {
-    os << point.first << " " << point.second
-        << std::endl;
+  os << "graph ConvexHull {" << std::endl;
+  // Output the points with positions
+  for (size_t i = 0; i < hull_.size(); ++i) {
+    const Point& point = hull_[i];
+    os << "  p" << i << " [pos=\"" << point.first << "," << point.second << "!\"];" << std::endl;
   }
+  // Output the edges
+  for (size_t i = 0; i < hull_.size(); ++i) {
+    os << "  p" << i << " -- p" << (i + 1) % hull_.size() << ";" << std::endl;
+  }
+  os << "}" << std::endl;
+}
+
+bool PointSet::IsPointInsideConvexHull(const Point& point) const {
+  std::cout << "Convex Hull Points:" << std::endl;
+  for (const Point& p : hull_) {
+    std::cout << "(" << p.first << ", " << p.second << ")" << std::endl;
+  }
+
+  for (size_t i = 0; i < hull_.size(); ++i) {
+    const Point& p1 = hull_[i];
+    const Point& p2 = hull_[(i + 1) % hull_.size()];
+    int side = FindSide(Line(p1, p2), point);
+    if (side < 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool PointSet::IsPointHull(const Point& point) const {
+  return std::find(hull_.begin(), hull_.end(), point) != hull_.end();
 }
 
 }  // namespace cya

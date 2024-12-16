@@ -21,16 +21,19 @@ class PointSet : public PointVector {
   PointSet(const std::vector<Point>& points) : PointVector(points) {}
   void ComputeQuickHull();
   void ComputeQuickHullUpgrade();
+  void ComputeBestConvexHull();
 
   void WriteDOT(std::ostream& os) const;
   void Write(std::ostream& os) const;
 
   inline const PointVector& GetHull() const { return hull_; }
   inline const PointVector& GetPoints() const { return *this;}
+
+  bool IsPointInsideConvexHull(const Point& point) const;
+  bool IsPointHull(const Point& point) const;
   
   void QuickHull(const Line& line, int side);
-  void QuickHullUpgrade(const Line& line, int side); // 
-  // todo: QuickHullBestStart
+  void QuickHullUpgrade(const Line& line, int side); 
 
   double Distance(const Line& line, const Point& point) const;
   int FindSide(const Line& line, const Point& point) const;

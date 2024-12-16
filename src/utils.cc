@@ -39,7 +39,7 @@ Arguments ParseArguments(const std::vector<std::string>& arguments) {
     if (argument == "-u") {
       upgrade_method = true;
     }
-    if (argument == "-o") {
+    if (argument == "--inside") {
       std::stringstream ss(arguments[arguments.size() - 2] + " " + arguments[arguments.size() - 1]);
       double x, y;
       ss >> x >> y;
@@ -150,7 +150,22 @@ void Run(int argc, char* argv[]) {
     BenchmarkQuickHull(point_vector);
     return;
   }
-  point_vector.ComputeQuickHull();
+  if (parsed_arguments.upgrade_method) {
+    std::cout << "Using upgraded QuickHull method." << std::endl;
+    point_vector.ComputeQuickHullUpgrade();
+  } else {
+    std::cout << "Using original QuickHull method." << std::endl;
+    point_vector.ComputeBestConvexHull();
+  }
+  if (parsed_arguments.point.has_value()) {
+    const cya::Point& point = parsed_arguments.point.value();
+    if (point_vector.IsPointHull(point)) {
+      std::cout << "The point (" << point.first << ", " << point.second << ") is in the hull." << std::endl;
+    } else {
+      std::cout << "The point (" << point.first << ", " << point.second << ") is not in the hull." << std::endl;
+    }
+    return;
+  }
   WriteHull(point_vector, parsed_arguments.output_file, parsed_arguments.dot);
 }
 
