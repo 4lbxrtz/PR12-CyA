@@ -18,11 +18,11 @@ enum Side {
 
 class PointSet : public PointVector {
  public:
-  PointSet(const std::vector<Point>& points);
+  PointSet(const std::vector<Point>& points) : PointVector(points) {}
+  void ComputeQuickHull();
+  void ComputeQuickHullUpgrade();
 
-  void QuickHull();
-
-  void WriteHull(std::ostream& os) const;
+  void WriteDOT(std::ostream& os) const;
   void Write(std::ostream& os) const;
 
   inline const PointVector& GetHull() const { return hull_; }

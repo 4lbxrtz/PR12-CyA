@@ -76,8 +76,12 @@ cya::PointSet ReadPoints(const std::string& file_name) {
     exit(EXIT_FAILURE);
   }
   std::vector<cya::Point> points;
-  double x, y;
-  while (is >> x >> y) {
+  int num_points;
+  is >> num_points;
+  
+  for (int i = 0; i < num_points; ++i) {
+    double x, y;
+    is >> x >> y;
     points.emplace_back(x, y);
   }
   return cya::PointSet(points);
@@ -88,29 +92,29 @@ void BenchmarkQuickHull(cya::PointSet point_set) {
 
   const int num_executions = 30;
   long long total_duration_quick_hull = 0;
-  long long total_duration_quick_hullUpgrade = 0;
+  long long total_duration_quick_hull_upgrade = 0;
 
   for (int i = 0; i < num_executions; ++i) {
     // Benchmark original QuickHull
     auto start = high_resolution_clock::now();
-    point_set.QuickHull();
+    point_set.ComputeQuickHull();
     auto end = high_resolution_clock::now();
     total_duration_quick_hull += duration_cast<microseconds>(end - start).count();
 
     // Benchmark optimized QuickHullUpgrade
     start = high_resolution_clock::now();
-    // point_set.QuickHullUpgrade();
+    point_set.ComputeQuickHullUpgrade();
     end = high_resolution_clock::now();
-    total_duration_quick_hullUpgrade += duration_cast<microseconds>(end - start).count();
+    total_duration_quick_hull_upgrade += duration_cast<microseconds>(end - start).count();
   }
 
   long long mean_duration_quick_hull = total_duration_quick_hull / num_executions;
-  long long mean_duration_quick_hull_upgrade = total_duration_quick_hullUpgrade / num_executions;
+  long long mean_duration_quick_hull_upgrade = total_duration_quick_hull_upgrade / num_executions;
 
   // Output results
   std::cout << "Benchmark Results (averaged over " << num_executions << " executions):" << std::endl;
   std::cout << "Original QuickHull Time: " << mean_duration_quick_hull << " microseconds" << std::endl;
-  std::cout << "Optimized _quick_hullUpgrade Time: " << mean_duration_quick_hull_upgrade << " microseconds" << std::endl;
+  std::cout << "Upgraded QuickHull Time: " << mean_duration_quick_hull_upgrade << " microseconds" << std::endl;
 
   if (mean_duration_quick_hull_upgrade < mean_duration_quick_hull) {
     long long improvement = mean_duration_quick_hull - mean_duration_quick_hull_upgrade;
@@ -132,7 +136,7 @@ void WriteHull(const cya::PointSet& point_set, const std::string& file_name, boo
     exit(EXIT_FAILURE);
   }
   if (dot) {
-    point_set.WriteHull(os);
+    point_set.WriteDOT(os);
   } else {
     point_set.Write(os);
   }
@@ -146,7 +150,7 @@ void Run(int argc, char* argv[]) {
     BenchmarkQuickHull(point_vector);
     return;
   }
-  point_vector.QuickHull();
+  point_vector.ComputeQuickHull();
   WriteHull(point_vector, parsed_arguments.output_file, parsed_arguments.dot);
 }
 
